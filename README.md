@@ -7,3 +7,5 @@ A microservices-based architecture implementing an order processing system. The 
 - Notification Service: Sends confirmation emails.
 
 Technologies: Spring Boot, RabbitMQ, RESTful APIs, and MySQL.
+
+![image](https://github.com/user-attachments/assets/d32e37f1-4dcf-48fc-b421-ea81058b5f55)
