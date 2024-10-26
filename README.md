@@ -8,5 +8,5 @@ A microservices-based architecture implementing an order processing system. The 
 
 Technologies: Spring Boot, RabbitMQ, RESTful APIs, and MySQL.
 
-![image](https://github.com/user-attachments/assets/6440d79b-5861-4fdf-ba44-662dc7047e00)
+![image](https://github.com/user-attachments/assets/ee4e0e9c-871a-409f-a2ed-0afc5d5b31f3)
 
