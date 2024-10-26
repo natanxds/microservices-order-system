@@ -51,22 +51,6 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public DirectExchange stockExchange() {
-        return new DirectExchange("stock.exchange");
-    }
-
-    @Bean
-    public Queue stockQueue() {
-        return new Queue("stock.response.queue");
-    }
-
-    @Bean
-    public Binding stockBinding(
-            @Qualifier("stockQueue") Queue stockQueue, @Qualifier("stockExchange") DirectExchange paymentExchange) {
-        return BindingBuilder.bind(stockQueue).to(paymentExchange).with("stock.quantity.result");
-    }
-
-    @Bean
     public SimpleMessageListenerContainer paymentListenerContainer(ConnectionFactory connectionFactory,
                                                                    Queue paymentStatusQueue) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
@@ -79,18 +63,6 @@ public class RabbitMQConfig {
         return container;
     }
 
-    @Bean
-    public SimpleMessageListenerContainer stockListenerContainer(ConnectionFactory connectionFactory,
-                                                                 Queue stockQueue) {
-        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
-        container.setQueues(stockQueue);
-        container.setMessageListener((ChannelAwareMessageListener) (message, channel) -> {
-            log.info("Message received from the queue: {}", new String(message.getBody()));
-            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
-        });
-        return container;
-    }
 
     @Bean
     public Jackson2JsonMessageConverter messageConverter() {

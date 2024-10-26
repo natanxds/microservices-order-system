@@ -1,8 +1,9 @@
 package com.natanxds.order_service.service;
 
+import com.natanxds.order_service.exceptions.InsufficientStockException;
 import com.natanxds.order_service.exceptions.OrderAlreadyExistsException;
 import com.natanxds.order_service.model.OrderRequest;
-import com.natanxds.order_service.model.StockResponse;
+import com.natanxds.order_service.model.StockResponseDto;
 import com.natanxds.order_service.repository.OrderRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -20,17 +21,22 @@ public class OrderService {
 
     private final RabbitTemplate rabbitTemplate;
 
-    public OrderService(OrderRepository orderRepository, RabbitTemplate rabbitTemplate) {
+    private final StockServiceClient stockServiceClient;
+
+    public OrderService(OrderRepository orderRepository, RabbitTemplate rabbitTemplate, StockServiceClient stockServiceClient) {
         this.orderRepository = orderRepository;
         this.rabbitTemplate = rabbitTemplate;
+        this.stockServiceClient = stockServiceClient;
     }
 
     public Order createOrder(OrderRequest orderRequest) {
         log.info("createOrder - Creating order: {}", orderRequest);
-        if(isStockAvailable(orderRequest)){
-            return sendOrder(orderRequest);
+        StockResponseDto stockDto = stockServiceClient.checkStock(orderRequest.product());
+        if (stockDto.quantity() < orderRequest.quantity()) {
+            throw new InsufficientStockException("Product not available in stock");
         }
-        if(orderRepository.findByOrderId(orderRequest.orderId()).isPresent()){
+
+        if (orderRepository.findByOrderId(orderRequest.orderId()).isPresent()) {
             throw new OrderAlreadyExistsException("Order already exists");
         }
         rabbitTemplate.convertAndSend("order.exchange", "order.new", orderRequest);
@@ -56,8 +62,7 @@ public class OrderService {
         log.info("updateOrderStatus - Order status updated");
     }
 
-    public Order orderToEntity(OrderRequest orderRequest){
+    public Order orderToEntity(OrderRequest orderRequest) {
         return new Order(orderRequest.orderId(), orderRequest.product(), orderRequest.quantity());
     }
-
 }
