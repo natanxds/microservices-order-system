@@ -2,6 +2,7 @@ package com.natanxds.order_service.service;
 
 import com.natanxds.order_service.exceptions.InsufficientStockException;
 import com.natanxds.order_service.exceptions.OrderAlreadyExistsException;
+import com.natanxds.order_service.model.NotificationRequestDto;
 import com.natanxds.order_service.model.OrderRequest;
 import com.natanxds.order_service.model.StockResponseDto;
 import com.natanxds.order_service.repository.OrderRepository;
@@ -40,6 +41,7 @@ public class OrderService {
             throw new OrderAlreadyExistsException("Order already exists");
         }
         rabbitTemplate.convertAndSend("order.exchange", "order.new", orderRequest);
+        rabbitTemplate.convertAndSend("notification.exchange", "notification.new", new NotificationRequestDto(orderRequest.orderId(), "NEW ORDER CREATED :" + orderRequest.toString()));
         return orderRepository.save(this.orderToEntity(orderRequest));
     }
 

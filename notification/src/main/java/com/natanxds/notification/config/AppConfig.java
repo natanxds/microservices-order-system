@@ -1,4 +1,4 @@
-package com.natanxds.order_service.config;
+package com.natanxds.notification.config;
 
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;

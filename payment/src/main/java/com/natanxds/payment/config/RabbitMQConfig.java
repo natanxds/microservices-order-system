@@ -1,9 +1,7 @@
 package com.natanxds.payment.config;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.DirectExchange;
-import org.springframework.amqp.core.Queue;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -15,6 +13,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@Slf4j
 public class RabbitMQConfig {
 
     // Listening to order exchange - order.new
@@ -66,15 +65,22 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public SimpleMessageListenerContainer messageListenerContainer(ConnectionFactory connectionFactory,
-                                                                   Queue orderQueue) {
+    public SimpleMessageListenerContainer orderListenerContainer(ConnectionFactory connectionFactory,
+                                                                        Queue orderQueue) {
         SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
         container.setQueues(orderQueue);
+        container.setAcknowledgeMode(AcknowledgeMode.MANUAL); // Set acknowledgment mode to MANUAL
         container.setMessageListener((ChannelAwareMessageListener) (message, channel) -> {
-            System.out.println("Order received: " + new String(message.getBody()));
-            channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+            try {
+                log.info("Message received from the queue: {}", new String(message.getBody()));
+                channel.basicAck(message.getMessageProperties().getDeliveryTag(), false);
+            } catch (Exception e) {
+                log.error("Error processing message", e);
+                channel.basicNack(message.getMessageProperties().getDeliveryTag(), false, true);
+            }
         });
+        container.setPrefetchCount(1);
         return container;
     }
 
